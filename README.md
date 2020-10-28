@@ -1,2 +1,2 @@
 # genapnext-tower
-A web app to deploy Nextflow pipelines on GenAP
+A web app to deploy Nextflow pipelines on GenAP.
