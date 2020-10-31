@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+#quick test
+test.py
+template-app-redender-pages.py
+index.html
+

@@ -1,0 +1,96 @@
+{% extends "src/pages/jinja-templates/base.html" %}
+{% block content %}
+
+    </style>
+       <div class="container-fluid"  id="content">        
+        <div class="row">
+            <div class="col-xl-12 col-lg-12">
+                <div class="card border-light shadow-lg h-100 py-2 p-4">
+                    <h1> Pipeline {{ option }}</h1>
+                </div>
+            </div>
+        </div>
+        <br><br>
+        <div class="row">           
+            <div class="col-xl-3 col-md-3 mb-2 mt-2 p-1">
+                {% for k in jobs.keys() %}
+                <div class="card border-left-{{ jobs[k]['level'] }} shadow h-1 py-2 mt-2 mb-2 ">
+                    <div class="card-body">
+                      <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                          <div class="text-xs font-weight-bold text-{{ jobs[k]['level'] }} text-uppercase mb-1">{{ jobs[k]['pipeline_name'] }}</div>
+                          <div class="h5 mb-0 font-weight-bold">{{jobs[k]['run_name']}}</div>
+                          <div class="mb-0">Start: {{ jobs[k]['start'] }}</div>
+                          <div class="mb-0">State: {{ jobs[k]['state'] }}</div>
+                          <div class="mb-0">Exit: {{ jobs[k]['exit'] }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="material-icons md-48">analytics</i>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+            {% endfor %}              
+            </div>
+            
+            {% if trace == 'No trace yet' %}
+                <div class="col-xl-9 col-lg-9 live__scroll">
+                    <div class="card border-left-{{ jobs[option]['level'] }}  shadow h-100 py-2">
+                        <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-{{level}} text-uppercase mb-1">{{ jobs[option]['run_name'] }}</div>
+                            <div class="mb-0">{{ trace }}</div>
+                            <div class="mb-0">Reason: {{ jobs[option]['state'] }}</div>
+                            </div>
+                            <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+            {% else %}
+                <div class="col-xl-9 col-lg-9 live__scroll">
+                    <div class="card border-left-{{ jobs[option]['level'] }}  shadow h-100 py-2">
+                        <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-{{level}} text-uppercase mb-1">{{ jobs[option]['run_name'] }}</div>
+                            <table class="table">
+                                <thead class="thead-dark">
+                                <tr>
+                                        {% for line in trace[0] %}
+                                            <th>{{ line }}</th>
+                                        
+                                        {% endfor %}
+
+                                </tr>
+                                </thead>
+                                <tbody>
+                                    {% for line in trace[1:] %}
+                                <tr>
+                                        {% for i in line%}
+                                            <td>{{ i }}</td>
+                                        {% endfor %}
+                                </tr>
+                                    {% endfor %}
+                            </tbody>
+                            </table>
+                            </div>
+                            <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+
+    
+{% endblock %}
