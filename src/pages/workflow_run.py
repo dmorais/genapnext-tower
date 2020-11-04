@@ -4,13 +4,14 @@ import os.path
 import streamlit as st
 import awesome_streamlit as ast
 import streamlit.components.v1 as components
+from streamlit import caching
 from PIL import Image
 import base64
 import subprocess
 import time
 import namegenerator
 
-from . import SessionState
+# from . import sessionstate
 from src.pages.util.web_helper import *
 from src.pages.util.data_parsers import get_user_dict, add_new_user,create_app_dirs
 
@@ -56,7 +57,8 @@ nextflow -C {config_name} -log out/nextflow_reports/{random_name}.log run vib-si
    
         html2 = f"<small>Job script ({random_name}) was created</small>"
         st.markdown(html2, unsafe_allow_html=True)
-
+        
+        caching.clear_cache()
 
 def pipeline_svg(pipeline_name):
     """
@@ -97,74 +99,49 @@ def _render_svg(svg):
                     width=1000)
 
 
-def config_panel(pipeline_name, config_name):
+def config_panel(state, pipeline_name, config_name):
     """
         Load base config of the pipeline and save the modified version of it
         :param pipeline_name: Pipeline name from the config file
         :return:
     """
   
+    
     st.header("Config of " + pipeline_name + " pipeline")
     file = open(os.path.join(BASE_DIR,"single_sample.config"), 'r')
 
     code = file.read()
-    session = SessionState.get(code=code)
+    # state.code = code
 
-    user_config = open(config_name, 'w')
-    state = st.radio("Edit or show", ['Edit', 'Show', "Hide"], 1)
+    
+    state_radio = st.radio("Edit or show", ['Edit', 'Show template', 'Show mine (only displayed after editing)', "Hide"], 1)
 
-    if state == 'Edit':
-        session.code = st.text_area('Edit code', session.code)
+    if state_radio == 'Edit':
+        state.code = st.text_area('Edit code', code)
 
         if st.button('Save changes'):        
-            
-            user_config.write(session.code)
+            user_config = open(config_name, 'w')
+            user_config.write(state.code)
             user_config.close()
             st.write('saved')
 
-    elif state == "Hide":
+    elif state_radio == "Hide":
         st.write("")
-
+    elif state_radio == "Show template":
+        st.code(code)
     else:
-        st.code(session.code)
-        user_config.write(session.code)
-        user_config.close()
-  
+        st.code(state.code)
+ 
 
-def user_section():
-    
-    # Get user dictonary
-    user_dict = get_user_dict(config["setup"]["app_dir"], config["setup"]["app_user"])
-
-    # SELECT BOX
-    st.markdown("<h2>Select your User name</h2>", unsafe_allow_html=True)
-    user = st.selectbox('', tuple(user_dict.keys()))
-
-    user_section = st.radio("Hide/show add new user", ['Show', "Hide"], 0)
-
-    if user_section == "Show":
-        unregistred_user = st.text_input("Add your user name: first_name last_name" ) 
-    
-        if st.button("Add new user"):
-            if len(unregistred_user.split()) != 2:
-                st.error("Must be in the first_name last_name format")
-            
-            else:
-                add_new_user(config["setup"]["app_dir"], config["setup"]["app_user"], unregistred_user)  
-                st.button("Reload User List")
-    else:
-        st.write("")
-
-    return user,user_dict[user]
-
-
-@st.cache
+@st.cache()
 def random_namegenerator():
+   
     return namegenerator.gen()
     
 
-def write():  
+def main(state):  
    
+    
     random_name = random_namegenerator()
         
     # Load st custom css   
@@ -172,21 +149,11 @@ def write():
 
     # Hide humburger menu
     hide_hambuger_menu()
-
-    st.title("GenAP-Next-Tower Jobs")
-
+    hide_none()
+    
     st.markdown("<h1>Workflows</h1>", unsafe_allow_html=True)
-
-    # User section (load/add new user)
-    option,unix_user = user_section()
-
-    #Create user dir
-    user_base_dir = os.path.join(config["setup"]["base_dir"], unix_user)
-    create_app_dirs(user_base_dir)
-
-
-    if option != "user name":
-        
+    
+    if state.user != "user name"  and state.user is not None:       
         # Let user set a random job name
         user_random = st.text_input("Job Random Name (optional). If you leave it blank we will assing a random name for you." )
 
@@ -194,19 +161,19 @@ def write():
             user_random = "-".join(user_random.strip().split())
             random_name = user_random
 
-        st.header("Choose your pipeline")
+        st.markdown("<h3>Choose your Pipeline</h3>", unsafe_allow_html=True)
         pipeline_name = st.selectbox(
          "",
          config["pipeline"]["pipelines"].split("\n")
         )  
         
         if pipeline_name != "None": 
-
             # Config name
-            config_name = os.path.join(user_base_dir, random_name + "_" + pipeline_name + ".config")
+            config_name = os.path.join(state.user_base_dir, random_name + "_" + pipeline_name + ".config")
             
-            config_panel(pipeline_name, config_name)
+            config_panel(state, pipeline_name, config_name)
             pipeline_svg(pipeline_name)  
+            prepare_job(pipeline_name, state.user_base_dir, random_name, config_name)   
 
-            prepare_job(pipeline_name, user_base_dir, random_name, config_name)
-
+    else:
+        st.info("Go to the Settings Page and Set or Add new User")

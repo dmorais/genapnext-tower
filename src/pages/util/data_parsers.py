@@ -5,10 +5,10 @@ def fake_data():
     """
     For test only
     """
-    fake_jobs_data = [(1, "Single_cell","Silly_Mokey","29-10-2020T15:57",'Complete',"0","/home/dmorais/projects/nextflow/vib-singlecell/out/nextflow_reports/"), 
-                      (2,"Super SC","Envy_John","30-01-2020T15:57",'Pending',"0","/home/dmorais/projects/nextflow/vib-singlecell/out/nextflow_reports/"),
-                      (3,"Vib 10X","Careful_lizard","27-10-2020T15:57",'Running',"0","/home/dmorais/projects/nextflow/vib-singlecell/out/nextflow_reports/"),
-                      (4,"SC-Genomics","Donald_duck","30-01-2020T15:57",'Failed',"127","/home/dmorais/projects/nextflow/vib-singlecell/out/nextflow_reports/"),
+    fake_jobs_data = [(1, "Single_cell","Silly_Mokey","29-10-2020T15:57",'Complete',"0","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"), 
+                      (2,"Super SC","Envy_John","30-01-2020T15:57",'Pending',"0","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"),
+                      (3,"Vib 10X","Careful_lizard","27-10-2020T15:57",'Running',"0","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"),
+                      (4,"SC-Genomics","Donald_duck","30-01-2020T15:57",'Failed',"127","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"),
     
     ]
 

@@ -48,56 +48,62 @@ def get_report(file_path, run_name):
     return report
 
 
-def write():
+def main(state):
 
     # Load st custom css   
     local_css()
 
     # Hide humburger menu
     hide_hambuger_menu()
+    hide_none()
 
-
-    trace = 'No trace yet'
-    jobs = get_db_stats()
-    
-    html_template = ''
-
-    st.title("GenAP-Next-Tower Jobs")
-    
-    # SELECT BOX
-    st.markdown("<h2>Select Job to display</h2>", unsafe_allow_html=True)
-    option = st.selectbox('', tuple(jobs.keys()))
-
-    page_report = st.radio("Select", ['Trace per Job', 'Full Report'])
-
-    if page_report == "Trace per Job":
-        # Update page 
-        update = st.button("Update Status")
+    if state.user != "user name" and state.user is not None:
+        trace = 'No trace yet'
+        jobs = get_db_stats()
         
-        # Get trace file
-        if jobs[option]["state"] == "Complete" or jobs[option]["state"] == "Failed":
-            trace = get_trace(jobs[option]["submission_dir"], jobs[option]["run_name"])
+        html_template = ''
+
+        st.title("Job Reports")
         
-        # load jinja
-        template = load_jinja('src/pages/jinja-templates/job_info.html')
+        # SELECT BOX
+        st.markdown("<h3>Select Job to display</h3>", unsafe_allow_html=True)
+        option = st.selectbox('', tuple(jobs.keys()))
 
-        # render template
-        html_template = template.render(jobs=jobs,  trace=trace, option=option)
+        page_report = st.radio("Select", ['Trace per Job', 'Full Report'])
 
-    else:
-        if jobs[option]["state"] == "Complete" or jobs[option]["state"] == "Failed":
-            html_template = get_report(jobs[option]["submission_dir"], jobs[option]["run_name"])
+        if page_report == "Trace per Job":
+            # Update page 
+            update = st.button("Update Status")
+            
+            # Get trace file
+            if jobs[option]["state"] == "Complete" or jobs[option]["state"] == "Failed":
+                trace = get_trace(jobs[option]["submission_dir"], jobs[option]["run_name"])
+            
+            # load jinja
+            template = load_jinja('src/pages/jinja-templates/job_info.html')
+
+            # render template
+            html_template = template.render(jobs=jobs,  trace=trace, option=option)
 
         else:
-            html_template = f'<h2>Job State is {jobs[option]["state"]}.</h2><h2>No report just yet</h2>'
+            if jobs[option]["state"] == "Complete" or jobs[option]["state"] == "Failed":
+                html_template = get_report(jobs[option]["submission_dir"], jobs[option]["run_name"])
+
+            else:
+                html_template = f'<h2>Job State is {jobs[option]["state"]}.</h2><h2>No report just yet</h2>'
 
 
-    components.html(html_template, 
-                        scrolling=True, 
-                        height=1000, 
-                        width=1100)
+        components.html(html_template, 
+                            scrolling=True, 
+                            height=1000, 
+                            width=1100)
+            
         
-    
-    st.markdown(f'<div class="footer p-3">All rights reveserved to ©GenAP</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="footer p-3">All rights reveserved to ©GenAP</div>', unsafe_allow_html=True)
+
+    else:
+        st.info("Go to the Settings Page and Set or Add new User")
+
+
 if __name__ == "__main__":
     write()

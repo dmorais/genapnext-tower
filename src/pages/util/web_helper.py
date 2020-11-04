@@ -34,5 +34,17 @@ def hide_hambuger_menu():
     </style>
 
     """
-    # st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
-    pass
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
+    
+
+def hide_none():
+    hide_streamlit_style = """
+    <style>
+    
+    code.language-python {visibility: visible;}
+    code {visibility: hidden;}
+    .reportview-container .main {display: block; padding: 1rem 15rem;}
+    </style>
+
+    """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
