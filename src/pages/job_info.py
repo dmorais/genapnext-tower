@@ -56,13 +56,14 @@ def write():
     # Hide humburger menu
     hide_hambuger_menu()
 
-    
+
     trace = 'No trace yet'
     jobs = get_db_stats()
     
     html_template = ''
 
     st.title("GenAP-Next-Tower Jobs")
+    
     # SELECT BOX
     st.markdown("<h2>Select Job to display</h2>", unsafe_allow_html=True)
     option = st.selectbox('', tuple(jobs.keys()))

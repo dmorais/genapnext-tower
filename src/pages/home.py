@@ -1,32 +1,38 @@
-import streamlit as st
-from jinja2 import Environment, FileSystemLoader
-import awesome_streamlit as ast
-import streamlit.components.v1 as components
 import os
 
-def load_jinja(jinja_template):
-    """
-        Prepare a jinja template to be rendered
-        :param jinja_template: html file with jinja code on it
-        :return template: a loaded jinja object
-    """
-    env = Environment(loader = FileSystemLoader('./'), trim_blocks=True, lstrip_blocks=True)
-    template = env.get_template(jinja_template)
+import streamlit as st
+import awesome_streamlit as ast
+import streamlit.components.v1 as components
+from PIL import Image
+import base64
+import subprocess
+import time
+import namegenerator
 
-    return template
+from . import SessionState
+from src.pages.util.web_helper import *
+from src.pages.util.data_parsers import create_app_dirs, create_user_dict
+
+import configparser
+
+config = configparser.ConfigParser()
+config.read('src/pages/configs/pipeline_config.ini')
+BASE_DIR = config["pipeline"]["base_dir"]  # Local where all pipelines are installed
+
 
 
 def write():
     
-    users = ["David", "Gabi", "Emma"]
+    # Set Up dirs and user list
+    create_app_dirs(config["setup"]["app_dir"])
+    create_user_dict(config["setup"]["app_dir"], config["setup"]["app_user"])
 
-    # load jinja
-    template = load_jinja('src/pages/jinja-templates/home.html')
+    # Load st custom css   
+    local_css()
 
-    # render template
-    html_template = template.render(users=users)
+    # Hide humburger menu
+    hide_hambuger_menu()
 
-    components.html(html_template, 
-                    scrolling=True, 
-                    height=10000, 
-                    width=1000)
+    st.title("GenAP-Next-Tower Jobs")
+
+    st.markdown("<h1>Home</h1>", unsafe_allow_html=True)

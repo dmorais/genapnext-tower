@@ -1,4 +1,6 @@
 
+import os
+
 def fake_data():
     """
     For test only
@@ -55,3 +57,53 @@ def get_db_stats():
         }
 
     return jobs
+
+
+def create_app_dirs(app_dir):
+    access_rights = 0o755
+
+    if not os.path.exists(app_dir):
+        try:
+            os.makedirs(os.path.join(app_dir), access_rights)
+        except OSError:
+            print ("Failed to create the directory %s " % app_dir)
+        else:
+            print ("Successfully created the directory %s" % app_dir)
+
+
+def create_user_dict(app_dir, app_user):
+
+    users_path = os.path.join(app_dir,app_user)
+
+    if not os.path.exists(users_path):
+        with open(users_path, 'w') as f:
+            user = "user name=user_name"
+            f.write(user)
+
+            print(f"File {users_path} as created")
+
+    return 0
+
+
+def get_user_dict(app_dir, app_user):
+
+    user_dict = {}
+    with open(os.path.join(app_dir,app_user), 'r') as f:
+
+        for line in f:
+            user = line.strip().split('=')
+            user_dict[user[0]] = user[1]
+    
+    return user_dict
+
+
+def add_new_user(app_dir, app_user, user_name):
+
+    user = "_".join(user_name.lower().split())
+  
+    users_path = os.path.join(app_dir,app_user)
+    new_user = user_name + "=" + user + "\n"
+
+    with open(os.path.join(app_dir,app_user), 'a') as f:
+        f.write(new_user)
+
