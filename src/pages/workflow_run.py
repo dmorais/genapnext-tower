@@ -11,7 +11,6 @@ import subprocess
 import time
 import namegenerator
 
-# from . import sessionstate
 from src.pages.util.web_helper import *
 from src.pages.util.data_parsers import get_user_dict, add_new_user,create_app_dirs
 

@@ -96,7 +96,7 @@ def main(state):
         components.html(html_template, 
                             scrolling=True, 
                             height=1000, 
-                            width=1100)
+                            width=1200)
             
         
         st.markdown(f'<div class="footer p-3">All rights reveserved to ©GenAP</div>', unsafe_allow_html=True)
