@@ -1,63 +1,123 @@
 
 import os
+import subprocess
 
-def fake_data():
-    """
-    For test only
-    """
-    fake_jobs_data = [(1, "Single_cell","Silly_Mokey","29-10-2020T15:57",'Complete',"0","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"), 
-                      (2,"Super SC","Envy_John","30-01-2020T15:57",'Pending',"0","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"),
-                      (3,"Vib 10X","Careful_lizard","27-10-2020T15:57",'Running',"0","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"),
-                      (4,"SC-Genomics","Donald_duck","30-01-2020T15:57",'Failed',"127","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"),
+# def fake_data():
+#     """
+#     For test only
+#     """
+#     fake_jobs_data = [(1, "Single_cell","Silly_Mokey","29-10-2020T15:57",'Complete',"0","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"), 
+#                       (2,"Super SC","Envy_John","30-01-2020T15:57",'Pending',"0","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"),
+#                       (3,"Vib 10X","Careful_lizard","27-10-2020T15:57",'Running',"0","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"),
+#                       (4,"SC-Genomics","Donald_duck","30-01-2020T15:57",'Failed',"127","/home/dmorais/genap_next_tower/David_Morais/out/nextflow_reports/"),
     
-    ]
+#     ]
 
-    return fake_jobs_data
+#     return fake_jobs_data
+
+def _paser_string_stats(stats):
+    """ 
+        This fucntion is needed because the stats are read from stdout, which cames as a string not a list of tuples :(
+
+    """
+
+    lst_lst_stats = []
+    p_list = []
+    rep_pattern = ['[', ']', '(', ')', '\\n','b"', '\'', ' ','"' ]
+
+    for rep in rep_pattern:
+        stats = stats.replace(rep,'')
 
 
+    list_stats = stats.split(',')
+    
+    for i, l in enumerate(list_stats):
+        p_list.append(l)
+        if (i + 1) % 11 == 0:
+            lst_lst_stats.append(p_list)
+            p_list = []
 
-def get_db_stats():
+    return lst_lst_stats
+   
+
+
+def get_db_stats(user):
     """
         This function fetches the jobs from the database and 
         :param:
-        :return jobs: A dict of dict  job={ "pipeline_name - "run_name": { "pipeline_name": "Single_cell",
+        :return jobs: A dict of dict  job={ "pipeline_name" - "run_name": { "job_id": "14074",
+                                                                            "PI": "PI_user_name",
                                                                             "run_name": "Silly Mokey",
+                                                                            "elapsed": "00:30:04",
                                                                             "start": "29-10-2020T15:57",
-                                                                            "state": 'Complete',
+                                                                            "state": "COMPLETED",
                                                                             "exit": "0"",
+                                                                            "submission_dir": "/path/",
                                                                             "level": danger
-                                                                            "submission_dir": "path"}, 
+                                                                            "pipeline_name": "Single_cell",
+                                                                           }, 
     """
+    
     level = {
-        'Complete' : 'success',
-        'Pending': 'primary',
-        'Running': 'warning',
-        'Failed': 'danger'
+        'COMPLETED' : 'success',
+        'PENDING': 'primary',
+        'REQUEUED': 'primary',
+        'SUSPENDED': 'primary',
+        'RESIZING': 'warning',
+        'RUNNING': 'warning',
+        'CANCELLED': 'danger',
+        'BOOT_FAIL': 'danger',
+        'DEADLINE': 'danger',
+        'NODE_FAIL': 'danger',
+        'OUT_OF_MEMORY': 'danger',
+        'PREEMPTED': 'danger',
+        'REVOKED': 'danger',
+        'TIMEOUT': 'danger',
+        'FAILED': 'danger'
     }
     
     jobs = {}
+    
 
-    ### TODO ################################
-    # Change this for a call to select from db
-    # Simulate a db call
-    db_jobs = fake_data()
+    ### Get Stats from DB ################################
+    cmd = ['/home/dmorais/anaconda3/envs/pyjob/bin/python', '/home/dmorais/projects/pyjobs/pyselect.py',
+          '-u', user]
 
-    for j in db_jobs:
 
-        color = level[j[4]]
+    try:
+        proc = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                )
+            
+        stdout_value, stderr_value = proc.communicate()
+        str_jobs = str(stdout_value)   
+        db_jobs = _paser_string_stats(str_jobs)
 
-        jobs[j[1] + " - " + j[2]] = {
-            "pipeline_name": j[1],
-            "run_name": j[2],
-            "start": j[3],
-            "state": j[4],
-            "exit": j[5],
-            "level": color,
-            "submission_dir": j[6]
-        }
+        for tuple_job in db_jobs:
+            for j in db_jobs:
+                color = level[j[6]]
 
-    return jobs
+                jobs[j[10] + " - " + j[3]] = {
+                        "job_id": j[1],
+                        "PI": j[2],
+                        "run_name": j[3],
+                        "elapsed": j[4],
+                        "start": j[5],
+                        "state": j[6],
+                        "exit": j[7],
+                        "submission_dir": j[8],
+                        "level": color,
+                        "pipeline_name": j[10]
+                    }
 
+
+        return jobs
+
+    except NameError as e:
+        print(e)
+
+    print(jobs)
 
 def create_app_dirs(app_dir):
     access_rights = 0o755

@@ -18,10 +18,39 @@ import configparser
 
 config = configparser.ConfigParser()
 config.read('src/pages/configs/pipeline_config.ini')
-BASE_DIR = config["pipeline"]["base_dir"]  # Local where all pipelines are installed
+BASE_DIR = config["pipeline"]["base_dir"]  # Local where all pipelines are installed 
 
 
-def prepare_job(pipeline_name, user_base_dir, random_name, config_name):
+def submit_job(state,pipeline_name, random_name):
+
+    run_file_name = random_name + "_run_" + pipeline_name + ".sh"
+
+   
+
+    if st.button("Submit Job"):
+               
+        cmd = ['/home/dmorais/anaconda3/envs/pyjob/bin/python', '/home/dmorais/projects/pyjobs/pysubmitjon.py',
+             '--user', state.unix_user, '-d', state.user_base_dir, '--files', run_file_name, '-p', pipeline_name
+              ]
+        try:
+            proc = subprocess.Popen(cmd,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    )
+            
+            stdout_value, stderr_value = proc.communicate()
+            print(stdout_value, stderr_value)
+        
+        except NameError as e:
+            print(e)
+       
+        if "Waiting for job on sacct" in str(stdout_value):
+            st.write(f'job {run_file_name} has been submitted')
+
+        caching.clear_cache()
+
+
+def prepare_job(state,pipeline_name, user_base_dir, random_name, config_name):
 
     
     st.header("Set Job Parameters")
@@ -32,16 +61,19 @@ def prepare_job(pipeline_name, user_base_dir, random_name, config_name):
     time = st.slider("Time", 1, 120, 24, 1)
     cpu = st.slider("CPUs", 1, 24, 6, 1)
     
-    st.write(random_name)
+    run_file_name = random_name + "_run_" + pipeline_name + ".sh"
+    # run_file_name = create_run_file_name(random_name,random_name) # It needs to be cached
     
     
     if st.button("Create run file"):
-        slurm_file =  open(os.path.join(user_base_dir, random_name + "_run_" + pipeline_name + ".sh" ), 'w')
-      
+        slurm_file =  open(os.path.join(user_base_dir, run_file_name ), 'w')
+
+
         command = f"""#!/bin/bash
 #SBATCH --time={time}
 #SBATCH --mem={mem}G
-#SBATCH --cpus-per-task={cpu} 
+#SBATCH --cpus-per-task={cpu}
+#SBATCH --job-name={random_name}  
 
 export RSNT_ARCH=avx2
 source /cvmfs/soft.computecanada.ca/config/profile/bash.sh
@@ -56,8 +88,8 @@ nextflow -C {config_name} -log out/nextflow_reports/{random_name}.log run vib-si
    
         html2 = f"<small>Job script ({random_name}) was created</small>"
         st.markdown(html2, unsafe_allow_html=True)
-        
-        caching.clear_cache()
+       
+
 
 def pipeline_svg(pipeline_name):
     """
@@ -172,7 +204,9 @@ def main(state):
             
             config_panel(state, pipeline_name, config_name)
             pipeline_svg(pipeline_name)  
-            prepare_job(pipeline_name, state.user_base_dir, random_name, config_name)   
-
+            prepare_job(state, pipeline_name, state.user_base_dir, random_name, config_name)    
+            
+                  
+            submit_job(state,pipeline_name, random_name)
     else:
         st.info("Go to the Settings Page and Set or Add new User")

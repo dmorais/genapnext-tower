@@ -51,6 +51,25 @@
                     </div>
 
                 </div>
+
+            {% elif trace == None %}
+            <div class="col-xl-9 col-lg-9 live__scroll">
+                <div class="card border-left-{{ jobs[option]['level'] }}  shadow h-100 py-2">
+                    <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-{{level}} text-uppercase mb-1">{{ jobs[option]['run_name'] }}</div>
+                        <div class="mb-0">No trace and/or report file for job {{ jobs[option]['run_name'] }} was found.</div>
+                        <div class="mb-0">Reason: The job may have died sundenly before the execution started.</div>
+                        </div>
+                        <div class="col-auto">
+                        <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+            </div>    
             {% else %}
                 <div class="col-xl-9 col-lg-9 live__scroll">
                     <div class="card border-left-{{ jobs[option]['level'] }}  shadow h-100 py-2">
