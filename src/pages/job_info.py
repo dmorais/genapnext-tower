@@ -16,13 +16,11 @@ def get_trace(file_path, run_name):
     :param run_name: random run name created at submission time (trace file depends on this name) 
     :return parsed_file: 
     """
-    
     parsed_file = []
     file_path = file_path + "/out/nextflow_reports"
     fn = os.path.join(file_path, run_name + "_execution_trace.txt")
 
-    if pathlib.Path(fn).exists():
-        
+    if pathlib.Path(fn).exists():       
 
         fh = open(fn, 'r')
 
@@ -43,6 +41,7 @@ def get_trace(file_path, run_name):
     else:
         return None
 
+
 @st.cache
 def get_report(file_path, run_name):
     """
@@ -57,7 +56,6 @@ def get_report(file_path, run_name):
     if pathlib.Path(fn).exists():
         fh = open(fn, 'r')
         report = fh.read()
-
         return report
 
     else:
@@ -76,6 +74,8 @@ def main(state):
     if state.user != "user name" and state.user is not None:
         trace = 'No trace yet'
         jobs = get_db_stats(state.unix_user)
+
+        jobs_list = reversed(jobs.keys())
         
         html_template = ''
 
@@ -94,13 +94,10 @@ def main(state):
             # Get trace file
             if jobs[option]["state"] == "COMPLETED" or jobs[option]["state"] == "FAILED":
                 trace = get_trace(jobs[option]["submission_dir"], jobs[option]["run_name"])
-            
-            # load jinja
-            template = load_jinja('src/pages/jinja-templates/job_info.html')
-
-            # render template
-            html_template = template.render(jobs=jobs,  trace=trace, option=option)
-
+                # load jinja
+                template = load_jinja('src/pages/jinja-templates/job_info.html')
+                # render template
+                html_template = template.render(jobs=jobs, jobs_list=jobs_list, trace=trace, option=option)
         else:
             if jobs[option]["state"] == "COMPLETED" or jobs[option]["state"] == "FAILED":
                 html_template = get_report(jobs[option]["submission_dir"], jobs[option]["run_name"])
@@ -109,17 +106,15 @@ def main(state):
                 if html_template is None:
                     trace = html_template
                     template = load_jinja('src/pages/jinja-templates/job_info.html')
-                    html_template = template.render(jobs=jobs,  trace=trace, option=option)
+                    html_template = template.render(jobs=jobs,  jobs_list=jobs_list, trace=trace, option=option)
             else:
                 html_template = f'<h2>Job State is {jobs[option]["state"]}.</h2><h2>No report just yet</h2>'
-
 
         components.html(html_template, 
                             scrolling=True, 
                             height=1000, 
                             width=1200)
            
-        
         st.markdown(f'<div class="footer p-3">All rights reveserved to ©GenAP</div>', unsafe_allow_html=True)
 
     else:
