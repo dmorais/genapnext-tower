@@ -92,7 +92,7 @@ nextflow -C {config_name} -log out/nextflow_reports/{random_name}.log run vib-si
 
 
 def pipeline_svg(pipeline_name):
-    """
+    """ 
         Load svg workflow of each pipeline (when available)
         :param pipeline_name: Pipeline name from the config file
         :return:
