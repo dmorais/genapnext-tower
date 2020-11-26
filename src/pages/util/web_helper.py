@@ -27,6 +27,7 @@ def load_jinja(jinja_template):
 
 
 def hide_hambuger_menu():
+   
     hide_streamlit_style = """
     <style>
     #MainMenu {visibility: hidden;}

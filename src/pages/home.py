@@ -16,7 +16,7 @@ import configparser
 
 config = configparser.ConfigParser()
 config.read('src/pages/configs/pipeline_config.ini')
-BASE_DIR = config["pipeline"]["base_dir"]  # Local where all pipelines are installed
+# BASE_DIR = config["pipeline"]["base_dir"]  # Local where all pipelines are installed
 
 def main(state):
     

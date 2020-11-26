@@ -21,6 +21,7 @@ config.read('src/pages/configs/pipeline_config.ini')
 BASE_DIR = config["pipeline"]["base_dir"]  # Local where all pipelines are installed 
 
 
+
 def submit_job(state,pipeline_name, random_name):
 
     run_file_name = random_name + "_run_" + pipeline_name + ".sh"
@@ -62,7 +63,6 @@ def prepare_job(state,pipeline_name, user_base_dir, random_name, config_name):
     cpu = st.slider("CPUs", 1, 24, 6, 1)
     
     run_file_name = random_name + "_run_" + pipeline_name + ".sh"
-    # run_file_name = create_run_file_name(random_name,random_name) # It needs to be cached
     
     
     if st.button("Create run file"):
@@ -91,78 +91,45 @@ nextflow -C {config_name} -log out/nextflow_reports/{random_name}.log run vib-si
        
 
 
-def pipeline_svg(pipeline_name):
-    """ 
-        Load svg workflow of each pipeline (when available)
-        :param pipeline_name: Pipeline name from the config file
-        :return:
-    """
-
-    list_of_svg = config["pipeline"]["svg"].split("\n")
-    
-    if pipeline_name in list_of_svg:
-        st.header("This is the " + pipeline_name + " Workflow")
-        file = open(os.path.join(BASE_DIR, pipeline_name + ".svg"), 'r')
-        svg = file.read()
-
-        state = st.radio("Show/Hide Workflow", ["Hide", "Show"], 0)
-        if state == "Show":
-            _render_svg(svg)
-
-    else:
-        st.info("No Workflow svg image available for this Pipeline.")
-
-
-def _render_svg(svg):
-    """
-        Render svg workflow of each pipeline (when available)
-        :param svg: svg file object
-        :return:
-    """
-
-    b64 = base64.b64encode(svg.encode('utf-8')).decode("utf-8")
-    html = r'<img  width="1000" height="600" src="data:image/svg+xml;base64,%s"/>' % b64
-
-    # st.markdown(html, unsafe_allow_html=True)
-    components.html(html, 
-                    scrolling=True, 
-                    height=800, 
-                    width=1000)
-
-
-def config_panel(state, pipeline_name, config_name):
+def config_panel(state, pipeline_name, config_name, pipeline_consortium):
     """
         Load base config of the pipeline and save the modified version of it
         :param pipeline_name: Pipeline name from the config file
         :return:
     """
-  
+    pipeline_dir = os.path.join(BASE_DIR, config[pipeline_consortium]["install_dir"])
     
-    st.header("Config of " + pipeline_name + " pipeline")
-    file = open(os.path.join(BASE_DIR,"single_sample.config"), 'r')
+    if os.path.exists(os.path.join(pipeline_dir , pipeline_name + ".config")):
 
-    code = file.read()
-    # state.code = code
+        st.header("Config of " + pipeline_name + " pipeline")
+        file = open(os.path.join(pipeline_dir , pipeline_name + ".config"), 'r')
 
+        code = file.read()
+        # state.code = code
+
+        
+        state_radio = st.radio("Edit or show", ['Edit', 'Show template', 'Show mine (only displayed after editing)', "Hide"], 1)
+
+        if state_radio == 'Edit':
+            state.code = st.text_area('Edit code', code, height=1000)
+
+            if st.button('Save changes'):        
+                user_config = open(config_name, 'w')
+                user_config.write(state.code)
+                user_config.close()
+                st.write('saved')
+
+        elif state_radio == "Hide":
+            st.write("")
+        elif state_radio == "Show template":
+            st.code(code)
+        else:
+            st.code(state.code)
     
-    state_radio = st.radio("Edit or show", ['Edit', 'Show template', 'Show mine (only displayed after editing)', "Hide"], 1)
+    else: 
+        st.info("This pipeline does not seem to be available now. Contact GenAP developers for more information")
+        return 1
 
-    if state_radio == 'Edit':
-        state.code = st.text_area('Edit code', code)
-
-        if st.button('Save changes'):        
-            user_config = open(config_name, 'w')
-            user_config.write(state.code)
-            user_config.close()
-            st.write('saved')
-
-    elif state_radio == "Hide":
-        st.write("")
-    elif state_radio == "Show template":
-        st.code(code)
-    else:
-        st.code(state.code)
- 
 
 @st.cache()
 def random_namegenerator():
@@ -170,10 +137,67 @@ def random_namegenerator():
     return namegenerator.gen()
     
 
+def get_pipeline_list(state):
+
+    pipeline_name = ''
+    pipeline_consortium = "None"
+    col1, col2, col3 = st.beta_columns(3)
+
+    col4, col5 = st.beta_columns([1,2])
+
+    if state.user != "user name"  and state.user is not None:       
+        
+        # st.markdown("<h3>Choose your Pipeline</h3>", unsafe_allow_html=True)
+        
+        with col1:
+            st.write("VIB-SingleCell-NF")
+            vib = Image.open("src/pages/jinja-templates/images/VIB-sc-NF.png")
+            st.image(vib, use_column_width=True)
+            
+        with col2:
+            nf_core = Image.open("src/pages/jinja-templates/images/nf-core.png")
+            st.write("nf-core")
+            st.image(nf_core, use_column_width=True)
+        with col3:
+            st.write("C3G")
+            c3g = Image.open("src/pages/jinja-templates/images/c3g.png")
+            st.image(c3g, use_column_width=True)
+
+        with col4:
+            pipeline_consortium = col4.radio("Choose consortium",["VIB-SingleCell-NF","nf-core", "C3G", "None"], index=3)
+        with col5:
+        
+            pipeline_name = st.selectbox(
+                "Choose your Workflow",
+                config[pipeline_consortium]["pipelines"].split("\n")
+            )
+
+    else:
+        st.info("Go to the Settings Page and Set or Add new User")
+        return "None"
+
+    return pipeline_name, pipeline_consortium
+
+
+def job_name(state):
+
+    user_random = ""
+
+    if state.user != "user name"  and state.user is not None:       
+        # Let user set a random job name
+        user_random = st.text_input("Job Random Name (optional). If you leave it blank we will assing a random name for you." )
+
+        if user_random != "":
+            user_random = "-".join(user_random.strip().split())
+            random_name = user_random
+
+    return user_random
+
+
+
+
 def main(state):  
    
-    
-    random_name = random_namegenerator()
         
     # Load st custom css   
     local_css()
@@ -183,30 +207,27 @@ def main(state):
     hide_none()
     
     st.markdown("<h1>Workflows</h1>", unsafe_allow_html=True)
-    
-    if state.user != "user name"  and state.user is not None:       
-        # Let user set a random job name
-        user_random = st.text_input("Job Random Name (optional). If you leave it blank we will assing a random name for you." )
 
-        if user_random != "":
-            user_random = "-".join(user_random.strip().split())
-            random_name = user_random
+    pipeline_name, pipeline_consortium = get_pipeline_list(state)
 
-        st.markdown("<h3>Choose your Pipeline</h3>", unsafe_allow_html=True)
-        pipeline_name = st.selectbox(
-         "",
-         config["pipeline"]["pipelines"].split("\n")
-        )  
+          
+    if pipeline_name != "None": 
+
+        random_name = job_name(state)
+
+        if random_name == "":
+            random_name = random_namegenerator()
+
         
-        if pipeline_name != "None": 
-            # Config name
-            config_name = os.path.join(state.user_base_dir, random_name + "_" + pipeline_name + ".config")
+        # Config name
+        config_name = os.path.join(state.user_base_dir, random_name + "_" + pipeline_name + ".config")
             
-            config_panel(state, pipeline_name, config_name)
-            pipeline_svg(pipeline_name)  
+        pipeline_config_ready = config_panel(state, pipeline_name, config_name, pipeline_consortium)
+        # pipeline_svg(pipeline_name)  
+
+        if pipeline_config_ready != 1:
             prepare_job(state, pipeline_name, state.user_base_dir, random_name, config_name)    
             
                   
             submit_job(state,pipeline_name, random_name)
-    else:
-        st.info("Go to the Settings Page and Set or Add new User")
+    
